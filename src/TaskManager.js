@@ -1,16 +1,9 @@
-import React, {
-  useReducer,
-  useMemo,
-  useRef,
-  useEffect,
-  useContext,
-  useCallback,
-} from "react";
+import React, { useReducer, useMemo, useRef, useEffect, useContext, useCallback } from "react";
 import ThemeContext from "./ThemeContext";
 
 // Initial state
 const initialState = {
-  tasks: [],
+  tasks: JSON.parse(localStorage.getItem('tasks')) || [],  // Load tasks from localStorage if available
   filter: "all",
 };
 
@@ -89,24 +82,43 @@ function TaskManager() {
     };
     dispatch({ type: ADD_TASK, payload: newTask });
 
+    // Save tasks to localStorage
+    localStorage.setItem('tasks', JSON.stringify([...tasks, newTask]));
+
     setTask("");
     setDescription("");
-  }, [task, description]);
+  }, [task, description, tasks]);
 
   const handleDeleteTask = useCallback((id) => {
     dispatch({ type: DELETE_TASK, payload: id });
-  }, []);
+
+    // Save updated tasks to localStorage
+    const updatedTasks = tasks.filter((task) => task.id !== id);
+    localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+  }, [tasks]);
 
   const handleToggleCompletion = useCallback((id) => {
     dispatch({ type: TOGGLE_COMPLETED, payload: id });
-  }, []);
+
+    // Save updated tasks to localStorage
+    const updatedTasks = tasks.map((task) =>
+      task.id === id ? { ...task, completed: !task.completed } : task
+    );
+    localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+  }, [tasks]);
 
   const handleUpdateTask = useCallback((id, updatedDescription) => {
     dispatch({
       type: UPDATE_TASK,
       payload: { id, updates: { description: updatedDescription } },
     });
-  }, []);
+
+    // Save updated tasks to localStorage
+    const updatedTasks = tasks.map((task) =>
+      task.id === id ? { ...task, description: updatedDescription } : task
+    );
+    localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+  }, [tasks]);
 
   const handleFilterChange = (filterValue) => {
     dispatch({ type: SET_FILTER, payload: filterValue });
